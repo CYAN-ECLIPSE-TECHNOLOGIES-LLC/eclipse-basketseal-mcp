@@ -250,7 +250,14 @@ def classify_capture(capture):
     UNWITNESSED — an architectural outcome, not a policy verdict."""
     if not isinstance(capture, dict):
         return None, "capture absent"
-    _check_keys(capture, CAPTURE_KEYS, "capture")
+    # Custody material in a capture is a custody refusal, as in a
+    # basket (cure F-4); any other field outside the capture
+    # grammar makes the capture invalid as presented, so the
+    # basket seals UNWITNESSED like every other invalid capture
+    # instead of aborting the seal with no record at all.
+    _scan_forbidden(capture, "capture")
+    if set(capture) - CAPTURE_KEYS:
+        return None, "capture carries field(s) outside the capture grammar"
     vantage = capture.get("vantage")
     if vantage not in VANTAGES:
         return None, "vantage is not a first-party basket surface"
@@ -731,7 +738,11 @@ class BasketsealService:
 
     def check(self, record_id):
         """Verdict class + per-component diff summary only — never
-        basket content (BKS-REQ-005)."""
+        basket content (BKS-REQ-005). The verdict is null exactly
+        when verdict issuance was refused (the licence leg);
+        verdict_issuance names that refusal so the null is a named
+        state, not a fourth unnamed one (cure F-4). It is null
+        whenever a verdict was issued or the record is UNWITNESSED."""
         rec = self._record(record_id)
         diffs = []
         if rec.get("recomputation"):
@@ -740,7 +751,8 @@ class BasketsealService:
                      for d in rec["recomputation"]["diffs"]]
         return {"record_id": rec["record_id"], "state": rec["state"],
                 "verdict": rec["verdict"], "diffs": diffs,
-                "tolerance": rec["tolerance"]}
+                "tolerance": rec["tolerance"],
+                "verdict_issuance": rec.get("verdict_issuance")}
 
     def export_record(self, record_id):
         rec = self._record(record_id)

@@ -223,7 +223,9 @@ class RecordIntegrityTests(ServiceCase):
         rec = self.seal_fx("fx-line-miscompute.json")
         chk = self.svc.check(rec["record_id"])
         self.assertEqual(set(chk), {"record_id", "state", "verdict",
-                                    "diffs", "tolerance"})
+                                    "diffs", "tolerance",
+                                    "verdict_issuance"})
+        self.assertIsNone(chk["verdict_issuance"])
         self.assertEqual(chk["verdict"], "MISCOMPUTES")
         self.assertEqual(chk["diffs"][0]["class"], "line-sum")
 
@@ -488,6 +490,38 @@ class CureF3ReadIntegrityTests(ServiceCase):
                 read(rec["record_id"])
             self.assertEqual(cm.exception.code,
                              "RECORD_INTEGRITY_MISMATCH")
+
+
+class CureF4CaptureAndNullVerdictTests(ServiceCase):
+    """Regression tests for Verity F-4 (LOW): capture-shape
+    inconsistency (extra key aborted the seal instead of sealing
+    UNWITNESSED; custody key in a capture misreported as
+    FIELD_UNKNOWN) and the unnamed verdict-null surface on
+    licence-refused records. Each fails on the pre-cure code."""
+
+    def test_f4_capture_extra_key_seals_unwitnessed(self):
+        capture = dict(CAPTURE, referrer="affiliate-link")
+        rec = self.svc.seal_basket(tiny_basket(), capture)
+        self.assertEqual(rec["verdict"], "UNWITNESSED")
+        self.assertIsNone(rec["recomputation"])
+
+    def test_f4_capture_custody_key_refused_as_custody(self):
+        capture = dict(CAPTURE, payment="card")
+        with self.assertRaises(BasketsealError) as cm:
+            self.svc.seal_basket(tiny_basket(), capture)
+        self.assertEqual(cm.exception.code, "BASKET_CUSTODY_REFUSED")
+
+    def test_f4_check_names_unissued_verdict(self):
+        svc = BasketsealService(
+            state_root=tempfile.mkdtemp(prefix="bks-f4-"),
+            licence_gate=None)
+        fx = load_fx("fx-clean.json")
+        rec = svc.seal_basket(fx["basket"], fx["capture"])
+        self.assertIsNone(rec["verdict"])
+        chk = svc.check(rec["record_id"])
+        self.assertIsNone(chk["verdict"])
+        self.assertTrue(
+            chk["verdict_issuance"].startswith("refused: LICENCE"))
 
 
 class TransportTests(unittest.TestCase):
