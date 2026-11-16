@@ -10,7 +10,8 @@ unchanged by this filing).
 Subject: cure delta against Verity's verdict on the initial
 build — VERDICT-20261115.md (this tree; sha256
 67629f7f9695d6c33f96fdfae932fb61b8c1c9235095014ab0a686692669774e),
-CONTRACT: FAIL on BK-B3 / finding F-1 (HIGH), with findings F-2
+whose contract line reads FAIL — on BK-B3 / finding F-1 (HIGH),
+with findings F-2
 (MED), F-3 (MED), F-4 (LOW) recorded. Spec of record:
 SPEC-BASKETSEAL.md (sha256
 519cf815e7b7eafe1605cb762446bb34ba82a82a94c19b1bac9a211049c151ec
