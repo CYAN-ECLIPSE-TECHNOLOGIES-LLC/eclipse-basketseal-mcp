@@ -1,0 +1,29 @@
+{
+ "product": "Cyan Eclipse Basketseal",
+ "version": "0.1.0",
+ "surface_hashes": {
+  "README.md": "b76ef7b337d0d9beaf42cc214ed64cd5bae5c0563482c925f4198c7338acf093"
+ },
+ "traces": [
+  {
+   "sentence_sha256": "c835ad1ae4db70c5",
+   "sentence": "## Metering and licence The charge event is the recomputation-with-verdict-record, following the firm's PC-4 pattern (single / batch at threshold) as a pattern fit only — no price is adopted for this ",
+   "basis": "SPEC-BASKETSEAL.md / argus-gate-basketseal-20261115.md (licence leg BKS-REQ-018; metering pattern PC-4, no price adopted)"
+  },
+  {
+   "sentence_sha256": "f4cde5c6128c8535",
+   "sentence": "The metered service operates only under a valid licence on the Cyan Eclipse License Server: with no licence or a revoked licence the record still seals at intake and the unmetered tools serve, and ver",
+   "basis": "SPEC-BASKETSEAL.md / argus-gate-basketseal-20261115.md (licence leg BKS-REQ-018; metering pattern PC-4, no price adopted)"
+  },
+  {
+   "sentence_sha256": "9a285c7197786516",
+   "sentence": "## Offline verification `verifier.py` re-derives the digest and the verdict from an exported bundle alone — no service, no store, no shared code with the core: ``` python3 verifier.py export.json ``` ",
+   "basis": "SPEC-BASKETSEAL.md / argus-gate-basketseal-20261115.md (licence leg BKS-REQ-018; metering pattern PC-4, no price adopted)"
+  },
+  {
+   "sentence_sha256": "a35d90e413f3a986",
+   "sentence": "License: MIT (see LICENSE).",
+   "basis": "SPEC-BASKETSEAL.md / argus-gate-basketseal-20261115.md (licence leg BKS-REQ-018; metering pattern PC-4, no price adopted)"
+  }
+ ]
+}
