@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "eclipse-basketseal"
+version = "0.1.0"
+description = "Cyan Eclipse Basketseal — basket-arithmetic witness MCP server: seals a checkout basket as presented and recomputes its total from its own sealed components."
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.10"
+dependencies = []
+
+[tool.setuptools]
+py-modules = ["basketseal", "licence", "server", "verifier"]

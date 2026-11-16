@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 200">
+  <defs>
+    <linearGradient id="g-splash" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#0ff6f7"/>
+      <stop offset="0.5" stop-color="#00d4ff"/>
+      <stop offset="1" stop-color="#7b2cbf"/>
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="640" height="200" fill="#0d1b2a"/>
+  <circle cx="100" cy="100" r="62" fill="#0a1626"/>
+  <circle cx="100" cy="100" r="56" fill="none" stroke="url(#g-splash)" stroke-width="5"/>
+  <g fill="none" stroke="#0ff6f7" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M76 58 L88 78"/>
+    <path d="M124 58 L112 78"/>
+    <path d="M70 78 L130 78 L124 100 L76 100 Z"/>
+  </g>
+  <text x="100" y="132" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="17" font-weight="700" fill="#fefefe" letter-spacing="1">BASKET</text>
+  <text x="100" y="152" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="17" font-weight="700" fill="#fefefe" letter-spacing="1">SEAL</text>
+  <text x="196" y="98" font-family="Arial, Helvetica, sans-serif" font-size="34" font-weight="700" fill="#fefefe" letter-spacing="1">CYAN ECLIPSE BASKETSEAL</text>
+  <text x="198" y="130" font-family="Arial, Helvetica, sans-serif" font-size="19" fill="#a0aec0">basket-arithmetic witness</text>
+  <rect x="198" y="146" width="330" height="4" fill="url(#g-splash)"/>
+</svg>
