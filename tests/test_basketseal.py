@@ -377,6 +377,62 @@ class MeteringLicenceTests(unittest.TestCase):
             self.assertEqual(out["verdict"], "RECOMPUTES")
 
 
+def cure_basket(merchant, ref, total="113.00"):
+    """The bench F-1 probe shape: one fixed arithmetic, variable
+    identity (merchant / order_ref / charged total)."""
+    return {"merchant": merchant, "order_ref": ref, "currency": "USD",
+            "lines": [{"description": "Trail Shoes",
+                       "description_class": "footwear", "quantity": "1",
+                       "unit_price": "80.00", "line_total": "80.00"},
+                      {"description": "Wool Socks",
+                       "description_class": "apparel", "quantity": "2",
+                       "unit_price": "12.50", "line_total": "25.00"}],
+            "discounts": [{"label": "Autumn sale", "amount": "5.00"}],
+            "fees": [{"label": "Shipping", "amount": "5.00"}],
+            "tax": {"amount": "8.00", "rate": "0.08", "base": "100.00"},
+            "charged_total": total,
+            "rounding": {"mode": "per-total", "precision": "0.01"}}
+
+
+class CureF1RecordIdentityTests(ServiceCase):
+    """Regression tests for Verity F-1 (HIGH, BK-B3): record_id
+    collision / silent overwrite. Each fails on the pre-cure code."""
+
+    def test_f1_two_distinct_baskets_same_arithmetic_coexist(self):
+        a = self.svc.seal_basket(cure_basket("Merchant A", "ORD-001"),
+                                 CAPTURE)
+        b = self.svc.seal_basket(cure_basket("Merchant B", "ORD-002"),
+                                 CAPTURE)
+        self.assertNotEqual(a["record_id"], b["record_id"])
+        self.assertEqual(len(self.svc._state["records"]), 2)
+        got_a = self.svc.get_record(a["record_id"])
+        self.assertEqual(got_a["merchant"], "Merchant A")
+        self.assertEqual(got_a["order_ref"], "ORD-001")
+        got_b = self.svc.get_record(b["record_id"])
+        self.assertEqual(got_b["merchant"], "Merchant B")
+        self.assertEqual(got_b["order_ref"], "ORD-002")
+        ids = {e["record_id"] for e in self.svc._state["journal"]}
+        self.assertEqual(ids, {a["record_id"], b["record_id"]})
+
+    def test_f1_post_collision_supersession(self):
+        r100 = self.svc.seal_basket(cure_basket("Merchant A", "ORD-100"),
+                                    CAPTURE)
+        r101 = self.svc.seal_basket(cure_basket("Merchant A", "ORD-101"),
+                                    CAPTURE)
+        self.assertNotEqual(r100["record_id"], r101["record_id"])
+        self.assertEqual(len(self.svc._state["records"]), 2)
+        r100b = self.svc.seal_basket(
+            cure_basket("Merchant A", "ORD-100", total="114.00"), CAPTURE)
+        self.assertEqual(r100b["version"], 2)
+        self.assertEqual(r100b["supersedes"], r100["record_id"])
+        self.assertEqual(self.svc.get_record(r100["record_id"])["state"],
+                         "SUPERSEDED")
+        still = self.svc.get_record(r101["record_id"])
+        self.assertEqual(still["state"], "SEALED")
+        self.assertEqual(still["version"], 1)
+        self.assertEqual(len(self.svc._state["records"]), 3)
+
+
 class TransportTests(unittest.TestCase):
     def test_stdio_dispatch_and_content_free(self):
         init = server.dispatch("initialize", {})

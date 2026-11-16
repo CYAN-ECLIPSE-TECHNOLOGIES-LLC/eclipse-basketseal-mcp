@@ -28,6 +28,10 @@ Discipline pins (build decisions, named for the bench):
 - Tolerance: half the basket's stated rounding precision unit where
   stated; otherwise half the smallest presented currency sub-unit.
   The tolerance used is named in every verdict record.
+- Record identity: a record_id derives from the canonical digest
+  plus the seal's identity material (merchant · order reference ·
+  journal seal sequence), so distinct baskets always coexist in
+  the store; supersession stays keyed to the order reference.
 """
 
 import hashlib
@@ -615,12 +619,29 @@ class BasketsealService:
         version = 1
         supersedes = None
         if order_ref:
-            for rec in self._state["records"].values():
-                if rec["order_ref"] == order_ref and rec["state"] == "SEALED":
+            prior = [rec for rec in self._state["records"].values()
+                     if rec["order_ref"] == order_ref
+                     and rec["state"] == "SEALED"]
+            if prior:
+                latest = max(prior, key=lambda rec: rec["version"])
+                version = latest["version"] + 1
+                supersedes = latest["record_id"]
+                for rec in prior:
                     rec["state"] = "SUPERSEDED"
-                    supersedes = rec["record_id"]
-                    version = rec["version"] + 1
-        record_id = "bks-%s-v%d" % (digest[:12], version)
+        # Record identity (cure F-1 / BK-B3): the record_id derives
+        # from the canonical digest PLUS this seal's identity
+        # material — merchant, order reference, and the seal's own
+        # journal sequence — so two distinct baskets with identical
+        # arithmetic never share an id, every sealed record coexists
+        # in the store, and no seal silently overwrites another
+        # record. The canonical form is unchanged: recomputation
+        # stays defined over the canonical components alone
+        # (BKS-REQ-013), and supersession stays keyed to the order
+        # reference.
+        seal_seq = len(self._state["journal"]) + 1
+        identity = {"digest": digest, "merchant": basket["merchant"],
+                    "order_ref": order_ref, "seal_seq": seal_seq}
+        record_id = "bks-%s-v%d" % (_sha(_canon(identity))[:12], version)
         record = {
             "record_id": record_id,
             "merchant": basket["merchant"],
