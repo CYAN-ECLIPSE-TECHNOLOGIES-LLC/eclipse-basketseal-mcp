@@ -698,11 +698,32 @@ class BasketsealService:
         return record
 
     # -- reads -----------------------------------------------------------
+    def _verify_record(self, rec):
+        """Per-read integrity (cure F-3): a stored record serves only
+        if its sealed fields still hash to its record_hash and its
+        canonical form still digests to its pinned canonical_digest.
+        A tampered state file is refused with a named signal instead
+        of serving altered components under the original verdict.
+        (The record state field is excluded from the hash, as at
+        seal time, because supersession legitimately changes it.)"""
+        body = {k: v for k, v in rec.items()
+                if k not in ("record_hash", "state")}
+        canonical = rec.get("canonical")
+        ok = rec.get("record_hash") == _sha(_canon(body)) \
+            and isinstance(canonical, dict) \
+            and rec.get("canonical_digest") == canonical_digest(canonical)
+        if not ok:
+            raise BasketsealError(
+                "RECORD_INTEGRITY_MISMATCH",
+                "the stored record does not verify against its sealed "
+                "hashes; refusing to serve it")
+
     def _record(self, record_id):
         rec = self._state["records"].get(record_id)
         if rec is None:
             raise BasketsealError("RECORD_NOT_FOUND",
                                   "no sealed record under that id")
+        self._verify_record(rec)
         return rec
 
     def get_record(self, record_id):

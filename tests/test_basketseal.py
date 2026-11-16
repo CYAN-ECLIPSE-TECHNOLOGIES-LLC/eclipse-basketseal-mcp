@@ -456,6 +456,40 @@ class CureF2UnwitnessedExportTests(ServiceCase):
         self.assertNotIn("DIVERGENT", proc.stdout)
 
 
+class CureF3ReadIntegrityTests(ServiceCase):
+    """Regression test for Verity F-3 (MED, QA P6): reads did not
+    re-verify integrity — a stored component edited in the state
+    file was served under the original verdict with no signal.
+    Fails on the pre-cure code (tampered record serves)."""
+
+    def test_f3_tampered_stored_record_refused_on_read(self):
+        rec = self.seal_fx("fx-clean.json")
+        # An honest record verifies and serves after a reload.
+        fresh = BasketsealService(
+            state_root=self.tmp,
+            licence_gate=licence.FixtureGate("valid"))
+        self.assertEqual(fresh.get_record(rec["record_id"])["verdict"],
+                         "RECOMPUTES")
+        # Tamper: edit a stored component in the state file itself.
+        state_path = os.path.join(self.tmp, "basketseal.json")
+        with open(state_path, encoding="utf-8") as fh:
+            state = json.load(fh)
+        stored = state["records"][rec["record_id"]]
+        stored["components"][0]["line_total"] = "1.00"
+        stored["canonical"]["components"][0]["line_total"] = "1.00"
+        with open(state_path, "w", encoding="utf-8") as fh:
+            json.dump(state, fh)
+        reloaded = BasketsealService(
+            state_root=self.tmp,
+            licence_gate=licence.FixtureGate("valid"))
+        for read in (reloaded.get_record, reloaded.check,
+                     reloaded.export_record):
+            with self.assertRaises(BasketsealError) as cm:
+                read(rec["record_id"])
+            self.assertEqual(cm.exception.code,
+                             "RECORD_INTEGRITY_MISMATCH")
+
+
 class TransportTests(unittest.TestCase):
     def test_stdio_dispatch_and_content_free(self):
         init = server.dispatch("initialize", {})
