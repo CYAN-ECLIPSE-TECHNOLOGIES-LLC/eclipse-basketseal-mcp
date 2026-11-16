@@ -433,6 +433,29 @@ class CureF1RecordIdentityTests(ServiceCase):
         self.assertEqual(len(self.svc._state["records"]), 3)
 
 
+class CureF2UnwitnessedExportTests(ServiceCase):
+    """Regression test for Verity F-2 (MED, BK-B5/BK-B2 edge): an
+    exported UNWITNESSED record misreported as divergence. Fails on
+    the pre-cure code (matches_recorded False; verifier exit 1)."""
+
+    def test_f2_unwitnessed_export_reports_no_recorded_verdict(self):
+        rec = self.seal_fx("fx-unwitnessed.json")
+        self.assertEqual(rec["verdict"], "UNWITNESSED")
+        export = self.svc.export_record(rec["record_id"])
+        out = basketseal.recompute_export(export["bundle"])
+        self.assertIsNone(out["matches_recorded"])
+        path = os.path.join(self.tmp, "export-unwitnessed.json")
+        with open(path, "w", encoding="utf-8") as fh:
+            json.dump(export, fh)
+        proc = subprocess.run(
+            [sys.executable, os.path.join(ROOT, "verifier.py"), path],
+            capture_output=True, text=True, timeout=60)
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        self.assertIn("DIGEST OK", proc.stdout)
+        self.assertIn("UNRECORDED", proc.stdout)
+        self.assertNotIn("DIVERGENT", proc.stdout)
+
+
 class TransportTests(unittest.TestCase):
     def test_stdio_dispatch_and_content_free(self):
         init = server.dispatch("initialize", {})

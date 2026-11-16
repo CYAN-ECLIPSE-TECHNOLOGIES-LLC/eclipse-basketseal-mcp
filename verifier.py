@@ -105,7 +105,11 @@ def main():
     print("DIGEST", "OK" if digest_ok else "MISMATCH")
     verdict = recompute(form)
     recorded = bundle.get("verdict")
-    match = (recorded == verdict) if recorded else None
+    # Only an issued recomputation verdict can match or diverge;
+    # UNWITNESSED and verdict-null (licence-refused) records carry
+    # no recorded verdict and report UNRECORDED.
+    match = (recorded == verdict) \
+        if recorded in ("RECOMPUTES", "MISCOMPUTES") else None
     print("VERDICT", verdict,
           "MATCH" if match else ("DIVERGENT" if match is False
                                   else "UNRECORDED"))

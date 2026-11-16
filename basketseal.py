@@ -472,8 +472,13 @@ def recompute_export(bundle):
             "the sealed components govern and this bundle is not them")
     result = recompute(form)
     recorded = bundle.get("verdict")
+    # Only an issued recomputation verdict can match or diverge.
+    # UNWITNESSED carries no recomputation verdict by construction,
+    # and a licence-refused record carries verdict null; both take
+    # the no-recorded-verdict path (cure F-2) instead of reporting
+    # a no-verdict record as a failed verification.
     result["matches_recorded"] = (recorded == result["verdict"]) \
-        if recorded else None
+        if recorded in ("RECOMPUTES", "MISCOMPUTES") else None
     result["canonical_digest"] = bundle["canonical_digest"]
     return result
 
